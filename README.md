@@ -1,7 +1,6 @@
 # DBTT_G7T7_ResourceAllocation
-# DBTT Cathay Project Movie Recommender
 
-Welcome to the ML Movie Recommender project! This project aims to build a machine learning-based recommender system that predicts the daily earnings of movies based on various attributes like genre, distributor, MPAA rating, and more. The recommender is trained using a combination of **Random Forest** and **Linear Regression** models. The project was developed as part of the DBTT Cathay Project.
+Welcome to the ML Movie Recommender project! This project aims to build a machine learning-based recommender system that predicts the daily earnings of movies based on various attributes like genre, distributor, MPAA rating, domestic earnings, international earnings, rank and more. The recommender is trained using a combination of **Random Forest** and **Linear Regression** models. The project was developed as part of the DBTT Cathay Project.
 
 ## Table of Contents
 
@@ -16,36 +15,61 @@ Welcome to the ML Movie Recommender project! This project aims to build a machin
 
 ## Project Overview
 
-The goal of this project is to create a movie recommender system that:
+The goal of this project is to predict the daily earnings for a specific movie given its relevant details, allowing cinemas to decide how much resources they can allocate based on these predictions.
 
-- Analyzes movie metadata (such as genres, distributor, and MPAA rating) along with historical earnings data.
-- Trains machine learning models (Random Forest and Linear Regression) to predict daily earnings for movies.
-- Provides a framework for making real-time predictions based on input movie details, such as budget, runtime, and genre.
+Key Features:
+- Analyzes movie metadata (such as genre, distributor, MPAA rating, budget, and runtime) along with historical earnings data.
+- Builds a predictive model using machine learning (Random Forest and Linear Regression) to forecast daily earnings for movies.
+- Uses the model to make real-time predictions based on input movie details, such as budget, runtime, and genre.
+- Helps cinemas make more informed decisions about resource allocation for each movie.
 
 ## Data Description
 
 The project uses two primary datasets:
 
-1. **Attributes_DataFrame.csv**: Contains movie details, including attributes such as budget, distributor, genre, MPAA rating, runtime, and more.
-2. **Daily_DataFrame.csv**: Contains daily earnings data for the movies.
+1. **Attributes_DataFrame.csv**: Contains movie details, including the following columns:
+   - `Title`: Movie title
+   - `Domestic`: Domestic earnings
+   - `International`: International earnings
+   - `Budget`: Movie budget
+   - `Distributor`: Movie distributor
+   - `MPAA-Rating`: MPAA rating of the movie
+   - `Runtime`: Movie runtime (in minutes)
+   - `Genres`: Genre(s) of the movie
 
-These datasets are used to train and evaluate the machine learning models. Additionally, real-time predictions are made using input movie details, such as genre and budget.
+2. **Daily_DataFrame.csv**: Contains daily earnings data for the movies, including the following columns:
+   - `Movie_Title`: Title of the movie
+   - `Date`: Date of the earnings record
+   - `Daily`: Daily earnings for the movie
+   - `Theaters`: Number of theaters showing the movie on the given date
+   - `Rank`: Movie's rank based on earnings on that date
 
 ## Exploratory Data Analysis (EDA)
 
 The EDA phase was performed to understand the dataset and make informed decisions for model development:
 
-- **Data Quality and Preprocessing**:
-  - Merged datasets based on the movie title.
+- **Data Loading and Preprocessing**:
+  - Loaded the datasets and merged them based on the movie title.
   - Handled missing values by imputing numerical columns with the mean and categorical columns with the most frequent value.
-  
-- **Feature Engineering**:
-  - Extracted time-based features from the date field (year, month, day, and day of the week).
+  - Displayed the resulting DataFrame to inspect the data after preprocessing.
+
+- **Feature Engineering and Visualization**:
+  - Applied feature engineering to extract time-based features from the date field (year, month, day, and day of the week).
   - One-hot encoded categorical variables such as distributor and MPAA rating.
   - Applied multi-label encoding to the genres field to create binary genre features.
+  - Visualized the DataFrame to observe the structure and distribution of data.
 
-- **Model Training**:
-  - Trained and evaluated both Random Forest and Linear Regression models to predict the daily earnings of movies.
+- **Data Visualization**:
+  - Visualized the relationship between various features to identify trends, such as:
+    - Number of movies per distributor
+    - Total earnings by year
+    - Total earnings by month
+    - Total earnings by day of the week
+    - Earnings by genre
+
+- **Correlation Analysis**:
+  - Conducted a correlation analysis to identify the relationships between different numerical features in the dataset.
+  - Visualized the correlation matrix to gain insights into potential predictors for the model.
 
 ## Model Methodology
 
@@ -53,7 +77,8 @@ The model uses a **content-based approach**:
 
 - **Random Forest** and **Linear Regression** are used to predict daily earnings based on the movie’s attributes and historical data.
 - The model features include budget, distributor, genre, MPAA rating, runtime, theaters, and date-based features (year, month, etc.).
-- The **Random Forest model** is chosen as the best performing model based on evaluation metrics such as Mean Absolute Error (MAE).
+- Both models will be evaluated and compared based on evaluation metrics such as Mean Absolute Error (MAE) to determine which one performs better.
+- The better-performing model will be selected for further use.
 
 ## Implementation Details
 
