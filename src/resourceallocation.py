@@ -1,5 +1,3 @@
-print("Script started...")
-
 #############################
 # 0. Import relevant libraries
 #############################
@@ -11,19 +9,16 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
-from datetime import datetime
+from datetime import datetime, timedelta
 from sklearn.impute import SimpleImputer
-
-print("Loading datasets...")
-
 
 #############################
 # 1. Load and Preprocess Data
 #############################
 
 # Load datasets
-attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv", nrows=100)
-daily_df = pd.read_csv("../data/Daily_DataFrame.csv", nrows=100)
+attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv")
+daily_df = pd.read_csv("../data/Daily_DataFrame.csv")
 
 # Merge datasets on movie title
 merged_df = daily_df.merge(attributes_df, left_on="Movie_Title", right_on="Title", how="left")
@@ -116,48 +111,68 @@ print(f"Linear Regression MAE: ${mae_lr:.2f}")
 print(f"Selected Model: {selected_model}")
 
 #############################
-# 4. Predict Daily Earnings for a New Movie
+# 4. Predict Daily Earnings for a New Movie within a given data range
 #############################
 
-def predict_daily_earnings(movie_details, model, encoder, mlb, scaler):
-    """Predict daily earnings for a given movie based on input details."""
+import pandas as pd
+
+def predict_daily_earnings_range(movie_details, start_date, end_date, model, encoder, mlb, scaler):
+    """Predict daily earnings for each day within a given date range."""
     
-    # Create DataFrame for new movie
-    new_movie_df = pd.DataFrame([movie_details])
+    # Convert string dates to datetime
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
     
-    # Extract date features
-    new_movie_df["Date"] = pd.to_datetime(new_movie_df["Date"])
-    new_movie_df["Year"] = new_movie_df["Date"].dt.year
-    new_movie_df["Month"] = new_movie_df["Date"].dt.month
-    new_movie_df["Day"] = new_movie_df["Date"].dt.day
-    new_movie_df["DayOfWeek"] = new_movie_df["Date"].dt.weekday
+    # List to store predictions for each date
+    predictions = []
     
-    # Encode categorical features
-    encoded_cats = pd.DataFrame(encoder.transform(new_movie_df[categorical_cols]))
-    encoded_cats.columns = encoder.get_feature_names_out(categorical_cols)
+    # Loop through each date in the range
+    for single_date in pd.date_range(start_date, end_date):
+        # Copy movie details and update the date
+        movie_details_copy = movie_details.copy()
+        movie_details_copy["Date"] = single_date
+        
+        # Create DataFrame for new movie
+        new_movie_df = pd.DataFrame([movie_details_copy])
+        
+        # Extract date features
+        new_movie_df["Year"] = new_movie_df["Date"].dt.year
+        new_movie_df["Month"] = new_movie_df["Date"].dt.month
+        new_movie_df["Day"] = new_movie_df["Date"].dt.day
+        new_movie_df["DayOfWeek"] = new_movie_df["Date"].dt.weekday
+        
+        # Encode categorical features
+        encoded_cats = pd.DataFrame(encoder.transform(new_movie_df[categorical_cols]))
+        encoded_cats.columns = encoder.get_feature_names_out(categorical_cols)
+        
+        # Process genres
+        new_movie_df["Genres"] = new_movie_df["Genres"].apply(lambda x: x.split(";") if isinstance(x, str) else [])
+        genres_onehot = pd.DataFrame(mlb.transform(new_movie_df["Genres"]), columns=mlb.classes_)
+        
+        # Concatenate features
+        new_movie_df = pd.concat([new_movie_df, encoded_cats, genres_onehot], axis=1)
+        
+        # Drop unused columns
+        new_movie_df.drop(columns=["Genres", "Date"] + categorical_cols, inplace=True)
+        
+        # Align feature columns with training data
+        missing_cols = set(X.columns) - set(new_movie_df.columns)
+        for col in missing_cols:
+            new_movie_df[col] = 0  # Fill missing columns with 0
+        
+        new_movie_df = new_movie_df[X.columns]  # Ensure same column order
+        
+        # Scale features
+        new_movie_scaled = scaler.transform(new_movie_df)
+        
+        # Predict earnings for this date
+        daily_earnings = model.predict(new_movie_scaled)[0]
+        
+        # Store prediction along with the date
+        predictions.append({"Date": single_date, "Predicted Earnings": daily_earnings})
     
-    # Process genres
-    new_movie_df["Genres"] = new_movie_df["Genres"].apply(lambda x: x.split(";") if isinstance(x, str) else [])
-    genres_onehot = pd.DataFrame(mlb.transform(new_movie_df["Genres"]), columns=mlb.classes_)
-    
-    # Concatenate features
-    new_movie_df = pd.concat([new_movie_df, encoded_cats, genres_onehot], axis=1)
-    
-    # Drop unused columns
-    new_movie_df.drop(columns=["Genres", "Date"] + categorical_cols, inplace=True)
-    
-    # Align feature columns with training data
-    missing_cols = set(X.columns) - set(new_movie_df.columns)
-    for col in missing_cols:
-        new_movie_df[col] = 0  # Fill missing columns with 0
-    
-    new_movie_df = new_movie_df[X.columns]  # Ensure same column order
-    
-    # Scale features
-    new_movie_scaled = scaler.transform(new_movie_df)
-    
-    # Predict earnings
-    return model.predict(new_movie_scaled)[0]
+    # Return the predictions
+    return pd.DataFrame(predictions)
 
 # Example Usage
 new_movie = {
@@ -165,10 +180,13 @@ new_movie = {
     "Distributor": "Warner Bros",
     "MPAA-Rating": "PG-13",
     "Runtime": 120,
-    "Genres": "Action;Adventure",  # Corrected genre format to use ';' instead of '|'
+    "Genres": "Action;Adventure",
     "Theaters": 3500,
-    "Date": "2025-06-15"  # Date format updated to match the expected format
+    "Date": "2025-06-15"
 }
 
-predicted_earnings = predict_daily_earnings(new_movie, best_model, encoder, mlb, scaler)
-print(f"Predicted daily earnings: ${predicted_earnings:.2f}")
+start_date = "2025-06-15"
+end_date = "2025-06-20"
+
+predictions_df = predict_daily_earnings_range(new_movie, start_date, end_date, best_model, encoder, mlb, scaler)
+print(predictions_df)
