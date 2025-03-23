@@ -1,3 +1,5 @@
+print("Script started...")
+
 #############################
 # 0. Import relevant libraries
 #############################
@@ -10,14 +12,18 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
 from datetime import datetime
+from sklearn.impute import SimpleImputer
+
+print("Loading datasets...")
+
 
 #############################
 # 1. Load and Preprocess Data
 #############################
 
 # Load datasets
-attributes_df = pd.read_csv("data/Attributes_DataFrames.csv")
-daily_df = pd.read_csv("data/Daily_DataFrames.csv")
+attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv", nrows=100)
+daily_df = pd.read_csv("../data/Daily_DataFrame.csv", nrows=100)
 
 # Merge datasets on movie title
 merged_df = daily_df.merge(attributes_df, left_on="Movie_Title", right_on="Title", how="left")
@@ -25,12 +31,22 @@ merged_df = daily_df.merge(attributes_df, left_on="Movie_Title", right_on="Title
 # Drop redundant title column
 merged_df.drop(columns=["Title"], inplace=True)
 
+# For numerical columns, fill missing values with the mean
+numerical_cols = merged_df.select_dtypes(include=["float64", "int64"]).columns
+imputer_num = SimpleImputer(strategy='mean')  # Use 'mean' for numerical data
+merged_df[numerical_cols] = imputer_num.fit_transform(merged_df[numerical_cols])
+
+# For categorical columns, fill missing values with the mode (most frequent value)
+categorical_cols = merged_df.select_dtypes(include=["object"]).columns
+imputer_cat = SimpleImputer(strategy='most_frequent')  # Use 'most_frequent' for categorical data
+merged_df[categorical_cols] = imputer_cat.fit_transform(merged_df[categorical_cols])
+
 #############################
 # 2. Feature Engineering
 #############################
 
 # Convert Date to datetime object
-merged_df["Date"] = pd.to_datetime(merged_df["Date"])
+merged_df["Date"] = pd.to_datetime(merged_df["Date"], dayfirst=True)
 
 # Extract useful time-based features
 merged_df["Year"] = merged_df["Date"].dt.year
@@ -40,7 +56,7 @@ merged_df["DayOfWeek"] = merged_df["Date"].dt.weekday  # 0=Monday, 6=Sunday
 
 # One-Hot Encode categorical variables
 categorical_cols = ["Distributor", "MPAA-Rating"]
-encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 encoded_cats = pd.DataFrame(encoder.fit_transform(merged_df[categorical_cols]))
 
 # Assign column names and reset index
@@ -51,7 +67,7 @@ encoded_cats.index = merged_df.index
 merged_df = pd.concat([merged_df, encoded_cats], axis=1)
 
 # Process Genres (multi-label encoding)
-merged_df["Genres"] = merged_df["Genres"].apply(lambda x: x.split(";") if isinstance(x, str) else [])
+merged_df["Genres"] = merged_df["Genres"].apply(lambda x: x.replace("|", ";").split(";") if isinstance(x, str) else [])
 from sklearn.preprocessing import MultiLabelBinarizer
 
 mlb = MultiLabelBinarizer()
@@ -149,9 +165,9 @@ new_movie = {
     "Distributor": "Warner Bros",
     "MPAA-Rating": "PG-13",
     "Runtime": 120,
-    "Genres": "Action|Adventure",
+    "Genres": "Action;Adventure",  # Corrected genre format to use ';' instead of '|'
     "Theaters": 3500,
-    "Date": "2025-06-15"
+    "Date": "2025-06-15"  # Date format updated to match the expected format
 }
 
 predicted_earnings = predict_daily_earnings(new_movie, best_model, encoder, mlb, scaler)
