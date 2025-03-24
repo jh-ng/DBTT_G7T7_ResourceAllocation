@@ -17,8 +17,8 @@ from sklearn.impute import SimpleImputer
 #############################
 
 # Load datasets
-attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv", nrows=10000)
-daily_df = pd.read_csv("../data/Daily_DataFrame.csv", nrows=10000)
+attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv")
+daily_df = pd.read_csv("../data/Daily_DataFrame.csv")
 
 # Merge datasets on movie title
 merged_df = daily_df.merge(attributes_df, left_on="Movie_Title", right_on="Title", how="left")
