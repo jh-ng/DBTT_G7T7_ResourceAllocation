@@ -77,7 +77,7 @@ The model uses a **content-based approach**:
 
 - **Random Forest** and **Linear Regression** are used to predict daily earnings based on the movie’s attributes and historical data.
 - The model features include budget, distributor, genre, MPAA rating, runtime, theaters, and date-based features (year, month, etc.).
-- Both models will be evaluated and compared based on evaluation metrics such as Mean Absolute Error (MAE) to determine which one performs better.
+- Both models will be evaluated and compared based on evaluation metrics such as R-squared (R²) to determine which one performs better. R-squared measures the proportion of variance explained by the model, with higher values indicating better model performance
 - The better-performing model will be selected for further use.
 
 ## Implementation Details

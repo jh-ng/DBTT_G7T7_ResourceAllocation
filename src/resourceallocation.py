@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, r2_score
 from datetime import datetime, timedelta
 from sklearn.impute import SimpleImputer
 
@@ -17,8 +17,8 @@ from sklearn.impute import SimpleImputer
 #############################
 
 # Load datasets
-attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv")
-daily_df = pd.read_csv("../data/Daily_DataFrame.csv")
+attributes_df = pd.read_csv("../data/Attributes_DataFrame.csv", nrows=10000)
+daily_df = pd.read_csv("../data/Daily_DataFrame.csv", nrows=10000)
 
 # Merge datasets on movie title
 merged_df = daily_df.merge(attributes_df, left_on="Movie_Title", right_on="Title", how="left")
@@ -94,20 +94,28 @@ X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, 
 rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
 rf_model.fit(X_train, y_train)
 y_pred_rf = rf_model.predict(X_test)
-mae_rf = mean_absolute_error(y_test, y_pred_rf)
+r2_rf = r2_score(y_test, y_pred_rf)  # Calculate R-squared for Random Forest
 
 # Train Linear Regression model
 lr_model = LinearRegression()
 lr_model.fit(X_train, y_train)
 y_pred_lr = lr_model.predict(X_test)
-mae_lr = mean_absolute_error(y_test, y_pred_lr)
+r2_lr = r2_score(y_test, y_pred_lr)  # Calculate R-squared for Linear Regression
 
 # Compare models
-best_model = rf_model if mae_rf < mae_lr else lr_model
-selected_model = "Random Forest" if mae_rf < mae_lr else "Linear Regression"
+best_model = rf_model if r2_rf > r2_lr else lr_model
+selected_model = "Random Forest" if r2_rf > r2_lr else "Linear Regression"
 
-print(f"Random Forest MAE: ${mae_rf:.2f}")
-print(f"Linear Regression MAE: ${mae_lr:.2f}")
+print(f"Random Forest R²: {r2_rf:.4f}")
+print(f"Linear Regression R²: {r2_lr:.4f}")
+print(f"Selected Model: {selected_model}")
+
+# Compare models
+best_model = rf_model if r2_rf > r2_lr else lr_model
+selected_model = "Random Forest" if r2_rf > r2_lr else "Linear Regression"
+
+print(f"Random Forest R²: {r2_rf:.4f}")
+print(f"Linear Regression R²: {r2_lr:.4f}")
 print(f"Selected Model: {selected_model}")
 
 #############################
