@@ -91,32 +91,12 @@ X_scaled = scaler.fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
 # Train Random Forest model
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_model = RandomForestRegressor(n_estimators=50, random_state=42)
 rf_model.fit(X_train, y_train)
 y_pred_rf = rf_model.predict(X_test)
 r2_rf = r2_score(y_test, y_pred_rf)  # Calculate R-squared for Random Forest
 
-# Train Linear Regression model
-lr_model = LinearRegression()
-lr_model.fit(X_train, y_train)
-y_pred_lr = lr_model.predict(X_test)
-r2_lr = r2_score(y_test, y_pred_lr)  # Calculate R-squared for Linear Regression
-
-# Compare models
-best_model = rf_model if r2_rf > r2_lr else lr_model
-selected_model = "Random Forest" if r2_rf > r2_lr else "Linear Regression"
-
 print(f"Random Forest R²: {r2_rf:.4f}")
-print(f"Linear Regression R²: {r2_lr:.4f}")
-print(f"Selected Model: {selected_model}")
-
-# Compare models
-best_model = rf_model if r2_rf > r2_lr else lr_model
-selected_model = "Random Forest" if r2_rf > r2_lr else "Linear Regression"
-
-print(f"Random Forest R²: {r2_rf:.4f}")
-print(f"Linear Regression R²: {r2_lr:.4f}")
-print(f"Selected Model: {selected_model}")
 
 #############################
 # 4. Predict Daily Earnings for a New Movie within a given data range
@@ -196,5 +176,5 @@ new_movie = {
 start_date = "2025-06-15"
 end_date = "2025-06-20"
 
-predictions_df = predict_daily_earnings_range(new_movie, start_date, end_date, best_model, encoder, mlb, scaler)
+predictions_df = predict_daily_earnings_range(new_movie, start_date, end_date, rf_model, encoder, mlb, scaler)
 print(predictions_df)

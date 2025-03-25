@@ -114,7 +114,7 @@ The model uses a **content-based approach**:
 3. **Run the Script**: Execute the main Python script to generate predictions:
 
     ```bash
-    python movierecommender.py
+    python resourceallocation.py
     ```
 
 4. **View the Predictions**: The script will output predictions for a sample movie, including its predicted daily earnings over a given date range.
